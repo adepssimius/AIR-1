@@ -1,0 +1,32 @@
+name: Generate Release Notes
+
+on:
+  push:
+    tags:
+      - "*.*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch full commit history
+
+      - name: Install git-chglog
+        run: |
+          curl -fsSL https://github.com/git-chglog/git-chglog/releases/latest/download/git-chglog-linux-amd64 -o /usr/local/bin/git-chglog
+          chmod +x /usr/local/bin/git-chglog
+
+      - name: Generate Changelog
+        run: git-chglog -o CHANGELOG.md $(git describe --tags --abbrev=0)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
